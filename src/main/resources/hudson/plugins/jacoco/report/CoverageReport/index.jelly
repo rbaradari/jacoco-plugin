@@ -10,8 +10,6 @@
         <a href="jacoco.exec">Download <tt>jacoco.exec</tt> binary coverage file</a>
       </div>
 
-      <e:floatingTrendGraph/>
-
       <h3>${%Overall Coverage Summary}</h3>
       <e:summaryTable title="${%all classes}"/>
 
