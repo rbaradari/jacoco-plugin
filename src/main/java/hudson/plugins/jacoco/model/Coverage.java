@@ -1,6 +1,9 @@
 package hudson.plugins.jacoco.model;
 
 import java.io.Serializable;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
+import java.util.Locale;
 
 import org.kohsuke.stapler.export.Exported;
 import org.kohsuke.stapler.export.ExportedBean;
@@ -78,6 +81,15 @@ final public class Coverage implements Serializable {
 
         // we use b) here for now, see JENKINS-56123 for more discussion on this
         return denominator <= 0 ? 100 : 100 * (numerator / denominator);
+    }
+
+    /**
+     * Gets the percentage as a formatted string value..
+     */
+    @Exported
+    public String getFormattedPercentage() {
+        DecimalFormat format = new DecimalFormat("##0.00", new DecimalFormatSymbols(Locale.US));
+        return format.format(getPercentageFloat());
     }
 
     public CoverageElement.Type getType() {

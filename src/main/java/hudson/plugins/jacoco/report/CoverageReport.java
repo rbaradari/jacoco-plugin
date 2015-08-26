@@ -2,12 +2,8 @@ package hudson.plugins.jacoco.report;
 
 import java.io.File;
 import java.io.IOException;
-import java.text.DecimalFormat;
-import java.text.DecimalFormatSymbols;
-import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
 import javax.annotation.Nonnull;
 import javax.servlet.ServletException;
@@ -170,9 +166,6 @@ public final class CoverageReport extends AggregatedReport<CoverageReport/*dummy
         return sb.toString();
     }
 
-    static final NumberFormat dataFormat = new DecimalFormat("000.00", new DecimalFormatSymbols(Locale.US));
-    static final NumberFormat percentFormat = new DecimalFormat("0.0", new DecimalFormatSymbols(Locale.US));
-	
 	@Override
 	protected void printRatioCell(boolean failed, Coverage ratio, StringBuilder buf) {
 		if (ratio != null && ratio.isInitialized()) {
@@ -193,15 +186,38 @@ public final class CoverageReport extends AggregatedReport<CoverageReport/*dummy
 	
 	@Override
 	protected void printRatioTable(Coverage ratio, StringBuilder buf){
-		buf.append("<table class='percentgraph' cellpadding='0' cellspacing='0'><tr class='percentgraph'>")
-		.append("<td style='width:40px' class='data'>").append(ratio.getPercentage()).append("%</td>")
-		.append("<td class='percentgraph'>")
-		.append("<div class='percentgraph' style='width:100px'>")
-		.append("<div class='redbar' style='width:")
-		.append(100 - ratio.getPercentage()).append("px'>")
-		.append("</div></div></td></tr><tr><td colspan='2'>")
-		.append("<span class='text'><b>M:</b> ").append(ratio.getMissed())
-		.append(" <b>C:</b> ").append(ratio.getCovered()).append("</span></td></tr></table>\n");
+        String numerator = intFormat.format(ratio.getMissed());
+        String denominator = intFormat.format(ratio.getCovered());
+        String total = intFormat.format(ratio.getTotal());
+        String percent = percentFormat.format(ratio.getPercentageFloat());
+        
+        double greenBar = 100d;
+        double redBar = 100d - ratio.getPercentage();
+
+        buf
+        .append("<table class='percentgraph' cellpadding='0px' cellspacing='0px'>")
+            .append("<tr class='percentgraph'>")
+                .append("<td style='width:40px' class='data'>")
+                    .append(percent).append("%")
+                .append("</td>")
+                .append("<td class='percentgraph'>")
+                    .append("<div class='percentgraph' style='width: ").append(greenBar).append("px;'>")
+                        .append("<div class='redbar' style='width: ").append(redBar).append("px'>")
+                        .append("</div>")
+                    .append("</div>")
+                .append("</td>")
+            .append("</tr>")
+            .append("<tr>")
+                .append("<td class='percentgraph' colspan='2'>")
+                    .append("<span class='text'>")
+                        .append("<b>M:</b> ").append(numerator).append(" ")
+                        .append("<b>C:</b> ").append(denominator).append(" ")
+                        .append("<b>T:</b> ").append(total)
+                    .append("</span>")
+                .append("</td>")
+            .append("</tr>")
+        .append("</table>")
+        .append("\n");
 	}
 
 	@Override

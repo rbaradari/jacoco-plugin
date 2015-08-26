@@ -9,7 +9,7 @@
 	 		<j:forEach var="coverageRatio" items="${it.coverageRatios}">
 	 		<tr>
 	 			<th style="background-color:#e0e0e0;width:30%">${coverageRatio.key.type}</th>
-	 			<td style="width:15%;text-align:center" class="${coverageRatio.value ? 'red':''}">${coverageRatio.key.percentage}%</td>
+	 			<td style="width:15%;text-align:center" class="${coverageRatio.value ? 'red':''}">${coverageRatio.key.formattedPercentage}%</td>
 	 			<td><div class="percentgraph"><div style="width:${100 - coverageRatio.key.percentage}%" class="redbar"></div></div></td>
 	 		</tr>
 	 		</j:forEach>

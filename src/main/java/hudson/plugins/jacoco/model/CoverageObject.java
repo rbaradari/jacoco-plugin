@@ -1,19 +1,10 @@
 package hudson.plugins.jacoco.model;
 
-import hudson.Util;
-import hudson.model.Api;
 import hudson.model.Run;
-import hudson.plugins.jacoco.Rule;
 import hudson.plugins.jacoco.model.CoverageGraphLayout.Axis;
 import hudson.plugins.jacoco.model.CoverageGraphLayout.CoverageType;
 import hudson.plugins.jacoco.model.CoverageGraphLayout.CoverageValue;
 import hudson.plugins.jacoco.model.CoverageGraphLayout.Plot;
-import hudson.plugins.jacoco.report.AggregatedReport;
-import hudson.util.ChartUtil;
-import hudson.util.ChartUtil.NumberOnlyBuildLabel;
-import hudson.util.DataSetBuilder;
-import hudson.util.Graph;
-import hudson.util.ShiftedCategoryAxis;
 import java.awt.Color;
 import java.io.IOException;
 import java.text.DecimalFormat;
@@ -41,6 +32,18 @@ import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
 import org.kohsuke.stapler.export.Exported;
 import org.kohsuke.stapler.export.ExportedBean;
+
+import hudson.Util;
+import hudson.model.AbstractBuild;
+import hudson.model.Api;
+import hudson.plugins.jacoco.Messages;
+import hudson.plugins.jacoco.Rule;
+import hudson.plugins.jacoco.report.AggregatedReport;
+import hudson.util.ChartUtil;
+import hudson.util.ChartUtil.NumberOnlyBuildLabel;
+import hudson.util.DataSetBuilder;
+import hudson.util.Graph;
+import hudson.util.ShiftedCategoryAxis;
 
 
 /**
@@ -253,10 +256,9 @@ public abstract class CoverageObject<SELF extends CoverageObject<SELF>> {
 		return clazz.isInitialized();
 	}
 
-
-	static NumberFormat dataFormat = new DecimalFormat("000.00", new DecimalFormatSymbols(Locale.US));
-	static NumberFormat percentFormat = new DecimalFormat("0.0", new DecimalFormatSymbols(Locale.US));
-	static NumberFormat intFormat = new DecimalFormat("0", new DecimalFormatSymbols(Locale.US));
+    protected static NumberFormat dataFormat = new DecimalFormat("000.00", new DecimalFormatSymbols(Locale.US));
+    protected static NumberFormat percentFormat = new DecimalFormat("##0.00", new DecimalFormatSymbols(Locale.US));
+    protected static NumberFormat intFormat = new DecimalFormat("0", new DecimalFormatSymbols(Locale.US));
 
 	protected void printRatioCell(boolean failed, Coverage ratio, StringBuilder buf) {
 		if (ratio != null && ratio.isInitialized()) {
@@ -270,9 +272,11 @@ public abstract class CoverageObject<SELF extends CoverageObject<SELF>> {
 	}
 
 	protected void printRatioTable(Coverage ratio, StringBuilder buf){
-		//String percent = percentFormat.format(ratio.getPercentageFloat());
 		String numerator = intFormat.format(ratio.getMissed());
 		String denominator = intFormat.format(ratio.getCovered());
+		String total = intFormat.format(ratio.getTotal());
+		String percent = percentFormat.format(ratio.getPercentageFloat());
+		
 		int maximum = 1;
 		if (ratio.getType().equals(CoverageElement.Type.INSTRUCTION)) {
 			maximum = getParent().maxInstruction;
@@ -288,19 +292,32 @@ public abstract class CoverageObject<SELF extends CoverageObject<SELF>> {
 		    maximum = getParent().maxClazz;
 		}
 
-		float redBar = ((float) ratio.getMissed())/maximum*100;
-		float greenBar = ((float)ratio.getTotal())/maximum*100;
-
-		buf.append("<table class='percentgraph' cellpadding='0px' cellspacing='0px'>")
-				.append("<tr>" +
-						"<td class='percentgraph' colspan='2'><span class='text'><b>M:</b> ").append(numerator).append(" <b>C:</b> ").append(denominator).append("</span></td></tr>")
-		.append("<tr>")
-		    .append("<td width='40px' class='data'>").append(ratio.getPercentage()).append("%</td>")	
-		    .append("<td>")
-		    .append("<div class='percentgraph' style='width: ").append(greenBar).append("px;'>")
-		    .append("<div class='redbar' style='width: ").append(redBar).append("px;'>")
-		    .append("</td></tr>")
-		    .append("</table>");
+        double greenBar = ((double) ratio.getTotal()) / maximum * 100;
+        double redBar = ((double) ratio.getMissed()) / maximum * 100;
+		
+		buf
+		.append("<table class='percentgraph' cellpadding='0px' cellspacing='0px'>")
+		    .append("<tr class='percentgraph'>")
+		        .append("<td style='width:40px' class='data'>")
+		            .append(percent).append("%")
+		        .append("</td>")
+		        .append("<td class='percentgraph'>")
+		            .append("<div class='percentgraph' style='width: ").append(greenBar).append("px;'>")
+		                .append("<div class='redbar' style='width: ").append(redBar).append("px;'>")
+		                .append("</div>")
+		            .append("</div>")
+		        .append("</td>")
+		    .append("</tr>")
+		    .append("<tr>")
+		        .append("<td class='percentgraph' colspan='2'>")
+		            .append("<span class='text'>")
+		                .append("<b>M:</b> ").append(numerator).append(" ")
+		                .append("<b>C:</b> ").append(denominator).append(" ")
+		                .append("<b>T:</b> ").append(total)
+		            .append("</span>")
+		        .append("</td>")
+		    .append("</tr>")
+	    .append("</table>");
 	}
 	
 	protected <ReportLevel extends AggregatedReport<?,?,?> > void setAllCovTypes( ReportLevel reportToSet, ICoverageNode covReport) {
